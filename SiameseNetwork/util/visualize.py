@@ -6,8 +6,6 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from torchmetrics import ConfusionMatrix
 from mlxtend.plotting import plot_confusion_matrix
-from torchmetrics import ConfusionMatrix
-from mlxtend.plotting import plot_confusion_matrix
 
 def plot_test_results(test_labels,pred_classes,test_samples1,test_samples2,test_data_custom):
   # Plot predictions
@@ -87,3 +85,16 @@ def plot_loss_curves(results: Dict[str, List[float]]):
     plt.title('Accuracy')
     plt.xlabel('Epochs')
     plt.legend();
+  
+def plot_cm(y_pred_tensor,test_targets_tensor,class_names:List = class_names):
+  # . Setup confusion matrix instance and compare predictions to targets
+  confmat = ConfusionMatrix(num_classes=len(class_names), task='multiclass')
+  confmat_tensor = confmat(preds=y_pred_tensor,
+                           target=test_targets_tensor)
+  
+  # 3. Plot the confusion matrix
+  fig, ax = plot_confusion_matrix(
+      conf_mat=confmat_tensor.numpy(), # matplotlib likes working with NumPy 
+      class_names=class_names, # turn the row and column labels into class names
+      figsize=(10, 7)
+  );
