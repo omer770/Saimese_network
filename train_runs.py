@@ -3,7 +3,10 @@ from tqdm.auto import tqdm
 from pathlib import Path
 from typing  import  Tuple, Dict, List
 
-device  = 'cuda' if torch.cuda.is_available() else 'cpu'
+idx_2_label = {0:'no',1:'rework',2:'solar',3:'tarp',4:'different'}
+label_2_idx ={'no':0,'rework':1,'solar':2,'tarp':3,'different' : 4}
+class_names = list(label_2_idx.keys())
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 weights_Dir = Path('/content/drive/MyDrive/Colab_zip/siamese_network/weights')
 weights_Dir.mkdir(parents=True, exist_ok=True)
 
@@ -47,9 +50,9 @@ def train_step(model: torch.nn.Module,
       y_pred = model(X1, X2)
 
       # 2. Calculate  and accumulate loss
+      if verbose == 1:print(f'y_pred: {y_pred.shape}, y: {y.shape}')
       loss = loss_fn(y_pred, y)
       train_loss += loss.item() 
-
       # 3. Optimizer zero grad
       optimizer.zero_grad()
 
@@ -98,8 +101,8 @@ def test_step(model: torch.nn.Module,
 
   # Turn on inference context manager
   with torch.inference_mode():
-          # Loop through DataLoader batches
-          for batch, (X1,X2, y) in enumerate(dataloader):
+      # Loop through DataLoader batches
+      for batch, (X1,X2, y) in enumerate(dataloader):
           # Send data to target device
           X1, X2, y = X1.to(device),X2.to(device), y.to(device)
     
@@ -167,7 +170,7 @@ def train(model: torch.nn.Module,
       "test_loss": [],
       "test_acc": []
   }
-  if verbose == 1:print("Total batches: ",len(dataloader))
+  if verbose == 1:print("Total batches: ",len(train_dataloader))
   if latest_weigths:
     print("choosen weights: ",latest_weigths)
     times = str(int(latest_weigths.split('_')[-2])+1).zfill(2)
