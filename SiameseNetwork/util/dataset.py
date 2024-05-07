@@ -13,6 +13,11 @@ idx_2_label = {0:'no',1:'rework',2:'solar',3:'tarp',4:'different'}
 label_2_idx ={'no':0,'rework':1,'solar':2,'tarp':3,'different' : 4}
 class_names = list(label_2_idx.keys())
 
+def split_train_test_df(dataframe:pandas.DataFrame,test_size:float = 0.2):
+    df_train = DataFrame.sample(frac=0.8)
+    df_test = df.drop(df_train.index)
+    return df_train,df_test
+    
 class RoofDataset(Data.Dataset):
     def __init__(self, dataframe,root_dir,
                  label_2_idx:dict = label_2_idx,
