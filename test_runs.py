@@ -3,15 +3,17 @@ import torch
 import random
 import torchvision 
 import pandas as pd
+from PIL import Image
 from pathlib import Path
 from tqdm.auto import tqdm
 from typing import List, Tuple
+import matplotlib.pyplot as plt
 import torchvision.transforms as T
-from PIL import Image
 
 idx_2_label = {0:'no',1:'rework',2:'solar',3:'tarp',4:'different'}
 label_2_idx ={'no':0,'rework':1,'solar':2,'tarp':3,'different' : 4}
 class_names = list(label_2_idx.keys())
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 def pred_and_plot_image(model: torch.nn.Module,
                         image_path1: str,
@@ -80,7 +82,9 @@ def str_2_lst(stng):
   stng = stng.replace("[","").replace("]","").replace("'","").replace(" ","").split(',')
   return stng
 
-def pred_dict_results(dataframe:pandas.DataFrame):
+def pred_dict_results(model: torch.nn.Module,
+                      dataframe:pd.DataFrame,
+                      root_dir:str):
   dict_id = {}
   for i in tqdm(range(len(dataframe))):
     building_id,buildings,years = dataframe.loc[i,:]
@@ -100,7 +104,7 @@ def pred_dict_results(dataframe:pandas.DataFrame):
       else:
         init_year = str(years[j-1])
         curr_year = str(years[j])
-        cls = predict(buildings[j-1],buildings[j])
+        cls = predict(model,buildings[j-1],buildings[j],root_dir)
         disc,typ = report_function(cls)
         dict_j[j] = {
             'year': init_year+' - '+curr_year,
@@ -109,9 +113,10 @@ def pred_dict_results(dataframe:pandas.DataFrame):
     dict_id[building_id] = dict_j
   return dict_id
   
-def predict(building1,building2,
+def predict(model: torch.nn.Module,
+            building1:Image ,building2:Image,
+            root_dir: str,
             class_names: List[str] = class_names,
-            root_dir = root_dir,
             image_size: Tuple[int, int] = (224, 224),
             transform: torchvision.transforms = None,
             device: torch.device=device):
