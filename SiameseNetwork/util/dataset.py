@@ -13,9 +13,9 @@ idx_2_label = {0:'no',1:'rework',2:'solar',3:'tarp',4:'different'}
 label_2_idx ={'no':0,'rework':1,'solar':2,'tarp':3,'different' : 4}
 class_names = list(label_2_idx.keys())
 
-def split_train_test_df(dataframe:pandas.DataFrame,test_size:float = 0.2):
-    df_train = DataFrame.sample(frac=0.8)
-    df_test = df.drop(df_train.index)
+def split_train_test_df(dataframe:pd.DataFrame,test_size:float = 0.2):
+    df_train = dataframe.sample(frac=0.8)
+    df_test = dataframe.drop(df_train.index)
     return df_train,df_test
     
 class RoofDataset(Data.Dataset):
@@ -65,7 +65,7 @@ def jsonify_str(strng:str ,path:str = None)->str:
     current_dir = os.getcwd()
   remove = ["```json\n{\n  ","}\n","  ","```",'"','\n']
   for item in remove: strng = strng.replace(item,"")
-  lst = strng.split(",")
+  lst1 = strng.split(",")
   dictn = {lst.split(':')[0].strip():lst.split(':')[1].strip() for lst in lst1}
   # Convert and write JSON object to file
   path_2_json = os.path.join(current_dir,"output.json")
