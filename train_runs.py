@@ -15,7 +15,7 @@ def train_step(model: torch.nn.Module,
                loss_fn: torch.nn.Module, 
                optimizer: torch.optim.Optimizer,
                device: torch.device,
-               verbose:int = 0) -> Tuple[float, float]:
+               verbose:int = 0):
   """Trains a PyTorch model for a single epoch.
 
   Turns a target PyTorch model to training mode and then
@@ -52,6 +52,7 @@ def train_step(model: torch.nn.Module,
       # 2. Calculate  and accumulate loss
       if verbose == 1:print(f'y_pred: {y_pred.shape}, y: {y.shape}')
       loss = loss_fn(y_pred, y)
+      #print("loss: ",loss)
       train_loss += loss.item() 
       # 3. Optimizer zero grad
       optimizer.zero_grad()
@@ -63,8 +64,11 @@ def train_step(model: torch.nn.Module,
       optimizer.step()
 
       # Calculate and accumulate accuracy metric across all batches
+      y_class = torch.argmax(y, dim=1)
+      #if verbose == 1:print(y_pred)
       y_pred_class = torch.argmax(torch.softmax(y_pred, dim=1), dim=1)
-      train_acc += (y_pred_class == y).sum().item()/len(y_pred)
+      if verbose == 1:print(f'y_pred_class: {y_pred_class.shape}, y_class: {y_class.shape}')
+      train_acc += (y_pred_class == y_class).sum().item()/len(y_pred)
 
   # Adjust metrics to get average loss and accuracy per batch 
   train_loss = train_loss / len(dataloader)
@@ -75,7 +79,7 @@ def test_step(model: torch.nn.Module,
               dataloader: torch.utils.data.DataLoader, 
               loss_fn: torch.nn.Module,
               device: torch.device,
-             verbose:int = 0) -> Tuple[float, float]:
+             verbose:int = 0):
   """Tests a PyTorch model for a single epoch.
 
   Turns a target PyTorch model to "eval" mode and then performs
@@ -98,7 +102,7 @@ def test_step(model: torch.nn.Module,
 
   # Setup test loss and test accuracy values
   test_loss, test_acc = 0, 0
-
+  if verbose == 1:print('Test Step:')
   # Turn on inference context manager
   with torch.inference_mode():
       # Loop through DataLoader batches
@@ -112,10 +116,12 @@ def test_step(model: torch.nn.Module,
           # 2. Calculate and accumulate loss
           loss = loss_fn(test_pred_logits, y)
           test_loss += loss.item()
+          # Calculate and accumulate accuracy metric across all batches
+          y_class = torch.argmax(y, dim=1)
 
           # Calculate and accumulate accuracy
           test_pred_labels = test_pred_logits.argmax(dim=1)
-          test_acc += ((test_pred_labels == y).sum().item()/len(test_pred_labels))
+          test_acc += ((test_pred_labels == y_class).sum().item()/len(test_pred_labels))
 
   # Adjust metrics to get average loss and accuracy per batch 
   test_loss = test_loss / len(dataloader)
@@ -132,7 +138,7 @@ def train(model: torch.nn.Module,
          save_path:str,
          latest_weigths:str = None,
          save_epoch:int=5,
-         verbose:int = 0) -> Dict[str, List]:
+         verbose:int = 0):
   """Trains and tests a PyTorch model.
 
   Passes a target PyTorch models through train_step() and test_step()
