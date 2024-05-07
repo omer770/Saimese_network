@@ -11,7 +11,8 @@ def train_step(model: torch.nn.Module,
                dataloader: torch.utils.data.DataLoader, 
                loss_fn: torch.nn.Module, 
                optimizer: torch.optim.Optimizer,
-               device: torch.device) -> Tuple[float, float]:
+               device: torch.device,
+               verbose:int = 0) -> Tuple[float, float]:
   """Trains a PyTorch model for a single epoch.
 
   Turns a target PyTorch model to training mode and then
@@ -70,7 +71,8 @@ def train_step(model: torch.nn.Module,
 def test_step(model: torch.nn.Module, 
               dataloader: torch.utils.data.DataLoader, 
               loss_fn: torch.nn.Module,
-              device: torch.device) -> Tuple[float, float]:
+              device: torch.device,
+             verbose:int = 0) -> Tuple[float, float]:
   """Tests a PyTorch model for a single epoch.
 
   Turns a target PyTorch model to "eval" mode and then performs
@@ -123,7 +125,11 @@ def train(model: torch.nn.Module,
           optimizer: torch.optim.Optimizer,
           loss_fn: torch.nn.Module,
           epochs: int,
-          device: torch.device) -> Dict[str, List]:
+          device: torch.device,   
+         save_path:str,
+         latest_weigths:str = None,
+         save_epoch:int=5,
+         verbose:int = 0) -> Dict[str, List]:
   """Trains and tests a PyTorch model.
 
   Passes a target PyTorch models through train_step() and test_step()
@@ -161,18 +167,29 @@ def train(model: torch.nn.Module,
       "test_loss": [],
       "test_acc": []
   }
-
+  if verbose == 1:print("Total batches: ",len(dataloader))
+  if latest_weigths:
+    print("choosen weights: ",latest_weigths)
+    times = str(int(latest_weigths.split('_')[-2])+1).zfill(2)
+    model.load_state_dict(torch.load(latest_weigths,map_location= device))
+  else:
+    print("choosen weights: ",latest_weigths)
+    times = '00'
+    # Make sure model on target device
+    model.to(device)
   # Loop through training and testing steps for a number of epochs
   for epoch in tqdm(range(epochs)):
       train_loss, train_acc = train_step(model=model,
                                           dataloader=train_dataloader,
                                           loss_fn=loss_fn,
                                           optimizer=optimizer,
-                                          device=device)
+                                          device=device,
+                                          verbose = verbose)
       test_loss, test_acc = test_step(model=model,
           dataloader=test_dataloader,
           loss_fn=loss_fn,
-          device=device)
+          device=device,
+          verbose = verbose)
 
       # Print out what's happening
       print(
@@ -188,6 +205,9 @@ def train(model: torch.nn.Module,
       results["train_acc"].append(train_acc)
       results["test_loss"].append(test_loss)
       results["test_acc"].append(test_acc)
-
+      if ((epoch+1)%save_epoch)==0:
+            # Save the model's weights after each epoch
+            torch.save(model.state_dict(), f"{str(save_path)}/sn_model_weights_{times}_{str(epoch+1).zfill(3)}.pth")
+            print(f"\nModel weights saved to {str(save_path)}/sn_model_weights_{times}_{str(epoch+1).zfill(3)}.pth")
   # Return the filled results at the end of the epochs
   return results
