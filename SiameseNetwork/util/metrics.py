@@ -7,6 +7,7 @@ from torch.nn import functional as F
 idx_2_label = {0:'no',1:'rework',2:'solar',3:'tarp',4:'different'}
 label_2_idx ={'no':0,'rework':1,'solar':2,'tarp':3,'different' : 4}
 class_names = list(label_2_idx.keys())
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 def contrastive_loss(similarity, label):
     margin = 1.0  # Hyperparameter to adjust
@@ -25,4 +26,3 @@ def calculate_ConfusionMatrices(y_pred_tensors:List,targets_tensors:List,
   print("Confusion Matrix: ")
   pprint(conf_mat)
   print('-'*75) 
-
